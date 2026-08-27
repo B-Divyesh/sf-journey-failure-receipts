@@ -1,0 +1,11 @@
+{
+  "slug": "journey-failure-receipts",
+  "title": "Journey Failure Receipts",
+  "territory": "devtools-data",
+  "user": "Teams using Playwright for critical user journeys who need the exact visual and DOM state at each failed soft assertion, not only the page state after the test finishes.",
+  "smallest_useful_product": "An npm Playwright reporter/helper that captures screenshot, selected DOM/accessibility snapshot, console errors, network summary, and masked form state at each configured soft assertion, then emits one static receipt per failure.",
+  "success_measure": "In a pilot set of failed journey tests, engineers identify the failing UI state without rerunning the test in at least 75% of cases.",
+  "artifact_class": "library-npm",
+  "monetization": "free",
+  "constraints": "Mask selectors and fields before capture; cap artifacts; make network bodies opt-in; ensure receipts do not expose credentials or customer data in CI artifacts."
+}
