@@ -81,6 +81,7 @@ Receipts are ordinary self-contained `.html` files with an embedded, bounded scr
 | `maxConsoleEntries` | `20` | Most recent errors and warnings |
 | `maxDomBytes` | `81920` | UTF-8 cap for scrubbed DOM |
 | `maxAriaBytes` | `40960` | UTF-8 cap for ARIA snapshot |
+| `maxScreenshotBytes` | `1500000` | Omit screenshots above this byte cap |
 | `screenshot` | `{ type: 'jpeg', quality: 72 }` | Screenshot format and quality |
 
 Invalid selectors and unavailable pages do not hide the assertion: the receipt records the capture error and the soft failure still reaches Playwright.
@@ -97,6 +98,8 @@ npm pack --dry-run
 ```
 
 `npm run build` produces ESM, CommonJS, and `.d.ts` package files in `dist/package`, then builds the documentation/demo site into `dist/site` with `index.html` at its root. Use `npm run dev` for the site.
+
+Deploy the contents of `dist/site` to any static host. The factory deployment target is `https://journey-failure-receipts.sociobot.in`; registry publishing is handled separately by the factory.
 
 ## Scope
 

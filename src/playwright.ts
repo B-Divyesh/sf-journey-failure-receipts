@@ -2,6 +2,7 @@ import { expect, test as base } from '@playwright/test';
 import type { ConsoleMessage, Request, TestInfo } from '@playwright/test';
 import { captureEvidence } from './capture.js';
 import { writeReceipt } from './receipt.js';
+import { redactText } from './sanitize.js';
 import type { ConsoleEvidence, NetworkEvidence, ReceiptController, ReceiptOptions, ResolvedReceiptOptions } from './types.js';
 
 function positive(value: number | undefined, fallback: number): number {
@@ -49,6 +50,7 @@ function createController(
         return await assertion();
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        let failureMessage = redactText(message);
         if (count < options.maxReceipts) {
           count += 1;
           const id = `${Date.now().toString(36)}-${process.pid.toString(36)}-${testInfo.retry}-${count}`;
@@ -64,6 +66,7 @@ function createController(
               network: networkEntries,
               options,
             });
+            failureMessage = evidence.error;
             const receipt = await writeReceipt(evidence, options);
             await testInfo.attach(`journey-receipt: ${label}`, { path: receipt.path, contentType: 'text/html' });
           } catch (captureError) {
@@ -73,7 +76,7 @@ function createController(
             });
           }
         }
-        expect.soft(false, `${label}\n${message}`).toBe(true);
+        expect.soft(false, `${label}\n${failureMessage}`).toBe(true);
         return undefined;
       }
     },

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { AxeBuilder } from '@axe-core/playwright';
 import { readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -41,6 +41,17 @@ test('legal pages have a single main heading', async ({ page }) => {
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
   }
+});
+
+test('installed documentation shell works offline', async ({ page, context }) => {
+  await page.goto('/');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.locator('#offline')).toBeVisible();
+  await context.setOffline(false);
 });
 
 test('built assets stay inside the static performance budget', () => {

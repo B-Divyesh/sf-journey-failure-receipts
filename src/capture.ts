@@ -37,6 +37,11 @@ async function scrubbedDom(page: CaptureContext['page'], rootSelector: string, m
   return page.locator(rootSelector).first().evaluate((root, { form, extra }) => {
     const clone = root.cloneNode(true) as Element;
     clone.querySelectorAll('script, style, template, noscript').forEach((element) => element.remove());
+    for (const element of [clone, ...clone.querySelectorAll('*')]) {
+      for (const attribute of [...element.attributes]) {
+        if (/^(href|src|action|formaction|poster)$/i.test(attribute.name)) element.setAttribute(attribute.name, '[redacted-url]');
+      }
+    }
     const redact = (element: Element) => {
       for (const attribute of [...element.attributes]) {
         if (/^(value|srcdoc)$/i.test(attribute.name) || /^(data-.+|aria-label)$/i.test(attribute.name)) element.setAttribute(attribute.name, '[redacted]');
