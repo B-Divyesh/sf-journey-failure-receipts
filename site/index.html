@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Capture scrubbed visual, DOM, console, and network evidence at the exact moment a Playwright journey assertion fails.">
+    <meta name="theme-color" content="#f3eedb">
+    <link rel="preload" href="/fonts/instrument-sans-700.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>Journey Failure Receipts — freeze the failed state</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="offline" id="offline" role="status" hidden>
+      You’re offline. The docs and demo still work; generated receipts never need a network.
+    </div>
+    <header class="site-header">
+      <a class="wordmark" href="/" aria-label="Journey Failure Receipts home">
+        <svg aria-hidden="true" width="34" height="34" viewBox="0 0 34 34"><path d="M4 4h26v26H4zM9 17h5l3-6 4 12 3-6h3"/></svg>
+        <span>Journey / failure receipts</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#demo">Inspect demo</a>
+        <a href="#install">Install</a>
+        <a href="https://github.com/B-Divyesh/sf-journey-failure-receipts">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy draft-in">
+          <p class="coordinate">PL–01 / assertion evidence</p>
+          <h1 id="hero-title">Freeze the failure.<br><em>Keep the journey moving.</em></h1>
+          <p class="lede">A tiny Playwright fixture that captures the visual, DOM, console, and network state at each failed soft assertion—not at the end of the test.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#install">Add to Playwright <span aria-hidden="true">↓</span></a>
+            <a class="button secondary" href="#demo">Open a receipt <span aria-hidden="true">↗</span></a>
+          </div>
+          <ul class="proof" aria-label="Product traits">
+            <li><span aria-hidden="true">✓</span> Local only</li>
+            <li><span aria-hidden="true">✓</span> Scrubbed first</li>
+            <li><span aria-hidden="true">✓</span> Zero runtime dependencies</li>
+          </ul>
+        </div>
+        <figure class="hero-plan draft-in">
+          <span class="measure top" aria-hidden="true">1280 / flow elevation</span>
+          <img src="/blueprint-journey.webp" width="1280" height="853" fetchpriority="high" alt="Technical plan of a browser journey with one failed step circled and four evidence callouts">
+          <figcaption><span>Fig. 01</span> Evidence is captured at the failure coordinate while the route continues.</figcaption>
+        </figure>
+      </section>
+
+      <section class="problem ruled" aria-labelledby="problem-title">
+        <p class="section-number">01 / The evidence gap</p>
+        <div>
+          <h2 id="problem-title">The report shows where the test ended. You need where it broke.</h2>
+          <p>A soft assertion lets a critical journey continue. That is useful—until the page changes three more times and the final trace no longer shows the broken cart, stale price, or silent JavaScript error.</p>
+        </div>
+        <ol class="route" aria-label="Failure capture sequence">
+          <li><strong>Assert</strong><span>Run your normal Playwright assertion.</span></li>
+          <li class="failure"><strong>Freeze</strong><span>On failure, scrub and capture immediately.</span></li>
+          <li><strong>Continue</strong><span>Register a soft failure; keep the journey running.</span></li>
+        </ol>
+      </section>
+
+      <section class="demo ruled" id="demo" aria-labelledby="demo-title">
+        <div class="section-heading">
+          <div><p class="section-number">02 / Live receipt specimen</p><h2 id="demo-title">One failure. Five useful clues.</h2></div>
+          <p>Choose a checkpoint to inspect the evidence an engineer receives. Arrow keys move between checkpoints.</p>
+        </div>
+
+        <div class="receipt-shell">
+          <div class="receipt-rail">
+            <p class="rail-label">Journey coordinates</p>
+            <div class="checkpoint-list" role="tablist" aria-label="Journey checkpoints" aria-orientation="vertical">
+              <button role="tab" aria-selected="false" aria-controls="evidence-panel" tabindex="-1" data-state="loaded"><span>01</span><strong>Product loaded</strong><small>200 · 484 ms</small></button>
+              <button role="tab" aria-selected="true" aria-controls="evidence-panel" data-state="failed"><span>02</span><strong>Cart count failed</strong><small>expected 1 · received 0</small></button>
+              <button role="tab" aria-selected="false" aria-controls="evidence-panel" tabindex="-1" data-state="continued"><span>03</span><strong>Journey continued</strong><small>checkout rendered</small></button>
+            </div>
+            <p class="scrub-note"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0110 0v3m-12 0h14v11H5z"/></svg><span><strong>Scrubbed before capture</strong>Fields, selectors, query strings, and credentials stay out.</span></p>
+          </div>
+
+          <div class="receipt-paper" id="evidence-panel" role="tabpanel" tabindex="0">
+            <div class="receipt-heading">
+              <div><p class="stamp" id="demo-stamp">Assertion failed · evidence frozen</p><h3 id="demo-label">Cart count increments</h3></div>
+              <span class="receipt-id" id="demo-id">RCPT / 02</span>
+            </div>
+            <div class="evidence-grid">
+              <section aria-labelledby="visual-title"><div class="evidence-title"><h4 id="visual-title">Viewport</h4><span id="visual-meta">42 KB · masked</span></div><div class="mini-browser" id="mini-browser"><div class="browser-bar"><i></i><i></i><i></i><span>shop.test/products/field-notes</span></div><div class="browser-content"><div class="product-shape" aria-hidden="true"></div><div><b>Field notes</b><span class="line wide"></span><span class="line"></span><button tabindex="-1">Added</button></div><mark class="cart-count">0</mark></div></div></section>
+              <section aria-labelledby="signal-title"><div class="evidence-title"><h4 id="signal-title">Signals</h4><span>bounded</span></div><dl class="signals"><div><dt>DOM</dt><dd id="dom-value">data-count="0"</dd></div><div><dt>ARIA</dt><dd id="aria-value">status “0 items”</dd></div><div><dt>Console</dt><dd id="console-value" class="danger">TypeError × 1</dd></div><div><dt>Network</dt><dd id="network-value">POST /cart · 200</dd></div></dl></section>
+            </div>
+            <p class="receipt-status" id="demo-status" role="status" aria-live="polite">Checkpoint 2 of 3: failed assertion evidence selected.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="contents ruled" aria-labelledby="contents-title">
+        <p class="section-number">03 / Every receipt includes</p>
+        <h2 id="contents-title">Enough state to diagnose. Not enough to become a data leak.</h2>
+        <ul class="artifact-list">
+          <li><span>01</span><div><h3>Masked viewport</h3><p>Current viewport, with every form control and configured selector covered before pixels are captured.</p></div></li>
+          <li><span>02</span><div><h3>Scrubbed DOM + ARIA</h3><p>A selected subtree with values removed, capped by bytes, paired with its accessibility shape.</p></div></li>
+          <li><span>03</span><div><h3>Console errors</h3><p>The bounded warnings and errors that led up to the assertion, with detected secrets redacted.</p></div></li>
+          <li><span>04</span><div><h3>Network metadata</h3><p>Method, redacted path, type, status, and duration. Bodies, headers, queries, and fragments never enter the file.</p></div></li>
+          <li><span>05</span><div><h3>Assertion context</h3><p>Test, project, page, timestamp, and the failure message, frozen into one portable HTML receipt.</p></div></li>
+        </ul>
+      </section>
+
+      <section class="install ruled" id="install" aria-labelledby="install-title">
+        <div><p class="section-number">04 / Field installation</p><h2 id="install-title">Wrap only the assertions that matter.</h2><p>Use regular <code>expect</code> inside <code>receipt.soft</code>. The helper freezes evidence, then records a real Playwright soft failure so your test can continue.</p></div>
+        <div class="code-sheet">
+          <div class="code-title"><span>fixtures.ts + journey.spec.ts</span><button class="copy-button" id="copy-code" type="button">Copy code</button></div>
+          <pre><code id="install-code"><span class="code-muted">// fixtures.ts</span>
+<span class="code-key">import</span> { createReceiptTest, expect } <span class="code-key">from</span> <span class="code-string">'journey-failure-receipts/playwright'</span>;
+
+<span class="code-key">export const</span> test = createReceiptTest({
+  maskSelectors: [<span class="code-string">'[data-private]'</span>],
+  domSelector: <span class="code-string">'main'</span>,
+});
+
+<span class="code-muted">// journey.spec.ts</span>
+test(<span class="code-string">'add to cart'</span>, <span class="code-key">async</span> ({ page, receipt }) =&gt; {
+  <span class="code-key">await</span> receipt.soft(<span class="code-string">'Cart count increments'</span>, <span class="code-key">async</span> () =&gt; {
+    <span class="code-key">await</span> expect(page.getByTestId(<span class="code-string">'cart-count'</span>)).toHaveText(<span class="code-string">'1'</span>);
+  });
+});</code></pre>
+          <p class="copy-status" id="copy-status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="closing" aria-labelledby="closing-title">
+        <p class="coordinate">PL–05 / ready for CI</p>
+        <h2 id="closing-title">Stop rerunning journeys just to see what already happened.</h2>
+        <div><a class="button primary" href="#install">Install the fixture <span aria-hidden="true">↑</span></a><p>Free, MIT licensed, and local by default.<br>No account. No upload. No lock-in.</p></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div><a class="wordmark" href="/"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 34 34"><path d="M4 4h26v26H4zM9 17h5l3-6 4 12 3-6h3"/></svg><span>Journey / failure receipts</span></a><p>Assertion-level evidence for Playwright journeys.</p></div>
+      <nav aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-journey-failure-receipts">Source</a></nav>
+      <p>Built by Param Factory · 2026</p>
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

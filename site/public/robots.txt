@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://journey-failure-receipts.sociobot.in/sitemap.xml
