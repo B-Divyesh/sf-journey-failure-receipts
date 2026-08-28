@@ -1,4 +1,16 @@
-# Journey Failure Receipts v0.1.0 handoff
+# Journey Failure Receipts v0.1.0 handoff — **FAIL**
+
+## Independent QA verdict (2026-08-28)
+
+**FAIL — do not release or publish candidate `82184b9d032304699f4a4b4c1bb6356b678f74e1`.** Fresh independent verification is recorded in [`.factory/verification.md`](verification.md). The live URL https://journey-failure-receipts.sociobot.in/ byte-matches this candidate's built site, so this is not a deployment-only mismatch.
+
+- **HIGH privacy:** a clean consumer using the packed tarball produced an ARIA snapshot containing a seeded form control `aria-label` secret. This breaks the documented/brief masking guarantee and can expose customer data in CI receipt artifacts.
+- **HIGH accessibility:** fresh axe at 390 px reports serious `scrollable-region-focusable` on the horizontally scrollable installation-code `<pre>`, so keyboard-only mobile users cannot reach all visible content.
+- Live static assets use 30-second revalidation rather than long-lived immutable caching; the host also serves no CSP/Permissions-Policy/frame policy. These are deployment hardening gaps.
+
+The previous builder verification below is superseded by this independent FAIL. See `verification.md` for exact commands, package-consumer reproduction, browser evidence, response headers, PWA/offline result, and required retest.
+
+---
 
 ## What was built
 
