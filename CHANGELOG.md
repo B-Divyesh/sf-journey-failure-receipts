@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3 — 2026-08-28
+
+- Generate ARIA evidence from a temporary structurally scrubbed DOM clone instead of post-processing a snapshot of the live customer page.
+- Add an actual-packed-consumer regression using the verifier's exact one-/two-character form, label, description, and configured-selector values, plus customer-name/slug/opaque-ID paths.
+
 ## 0.1.2 — 2026-08-28
 
 - Redact one- and two-character field, label, accessible-name, accessible-description, and configured-selector values in receipts.

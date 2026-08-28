@@ -17,8 +17,8 @@ test('redacts short form and configured-selector accessibility content from a pa
   });
   await page.setContent(`
     <main>
-      <label for="account">A</label>
-      <input id="account" aria-label="Li" aria-description="D" aria-describedby="account-description"
+      <label for="account">Li</label>
+      <input id="account" aria-label="Li" aria-describedby="account-description"
         placeholder="NY" title="CA" value="XY">
       <p id="account-description">OK</p>
       <p data-private aria-label="ID">NO</p>

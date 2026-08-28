@@ -87,49 +87,112 @@ async function screenshotMasks(page: CaptureContext['page'], selectors: string[]
   ];
 }
 
+type CloneOperation = {
+  form: string;
+  extra: string[];
+  mode: 'serialize' | 'mount';
+  snapshotId?: string;
+};
+
+/**
+ * This function is deliberately self-contained because Playwright serializes it
+ * into the inspected browser. It builds evidence from a clone, never by
+ * mutating the customer's page. In particular, it assigns a redacted ARIA
+ * name to each sensitive node: that prevents a live accessible-name lookup
+ * from following an original label or description outside the captured root.
+ */
+function scrubClone(root: Element, { form, extra, mode, snapshotId }: CloneOperation): string {
+  let clone = root.cloneNode(true) as Element;
+  if (mode === 'mount' && clone instanceof HTMLBodyElement) {
+    const wrapper = document.createElement('div');
+    for (const child of [...clone.childNodes]) wrapper.append(child);
+    clone = wrapper;
+  }
+
+  clone.querySelectorAll('script, style, template, noscript').forEach((element) => element.remove());
+  for (const element of [clone, ...clone.querySelectorAll('*')]) {
+    for (const attribute of [...element.attributes]) {
+      if (/^(href|src|action|formaction|poster)$/i.test(attribute.name)) element.setAttribute(attribute.name, '[redacted-url]');
+    }
+  }
+
+  const redact = (element: Element) => {
+    for (const attribute of [...element.attributes]) {
+      if (/^(value|srcdoc|placeholder|title|alt|aria-label|aria-description|aria-labelledby|aria-describedby)$/i.test(attribute.name) || /^(data-.+)$/i.test(attribute.name)) {
+        element.setAttribute(attribute.name, '[redacted]');
+      }
+    }
+    // Do not let an accessibility snapshot resolve the original associated
+    // label or an ID target. A direct replacement name is both safe and makes
+    // the redaction visible to receipt readers.
+    element.setAttribute('aria-label', '[redacted]');
+    element.removeAttribute('aria-labelledby');
+    element.removeAttribute('aria-describedby');
+    if (element.matches('input, textarea, select, [contenteditable]')) element.setAttribute('value', '[redacted]');
+    if (!element.matches('input')) element.textContent = '[redacted]';
+  };
+
+  const nodes = [clone, ...clone.querySelectorAll('*')];
+  const sensitive = new Set<Element>();
+  for (const element of nodes) if (element.matches(form)) sensitive.add(element);
+  for (const selector of extra) {
+    for (const element of nodes) if (element.matches(selector)) sensitive.add(element);
+  }
+  // A form control's visible label and ID-referenced name/description are
+  // part of the same private field. Redact these nodes in the clone before
+  // serializing, instead of relying solely on post-serialization matching.
+  for (const element of sensitive) {
+    for (const attribute of ['aria-labelledby', 'aria-describedby']) {
+      for (const id of (element.getAttribute(attribute) ?? '').split(/\s+/)) {
+        if (!id) continue;
+        for (const candidate of nodes) if (candidate.getAttribute('id') === id) sensitive.add(candidate);
+      }
+    }
+    if (element.matches('input, textarea, select')) {
+      const id = element.getAttribute('id');
+      for (const label of nodes) {
+        if (label.matches('label') && ((id !== null && label.getAttribute('for') === id) || label.contains(element))) sensitive.add(label);
+      }
+    }
+  }
+  sensitive.forEach(redact);
+
+  if (mode === 'serialize') return clone.outerHTML;
+
+  const host = document.createElement('div');
+  host.setAttribute('data-journey-receipt-snapshot', snapshotId!);
+  // The clone must participate in the accessibility tree for ariaSnapshot(),
+  // but is outside the visual viewport and exists only for this one call.
+  Object.assign(host.style, { position: 'fixed', left: '-100000px', top: '0', width: '1px', height: '1px', overflow: 'hidden' });
+  host.append(clone);
+  document.body.append(host);
+  return snapshotId!;
+}
+
 async function scrubbedDom(page: CaptureContext['page'], rootSelector: string, maskSelectors: string[]): Promise<string> {
-  return page.locator(rootSelector).first().evaluate((root, { form, extra }) => {
-    const clone = root.cloneNode(true) as Element;
-    clone.querySelectorAll('script, style, template, noscript').forEach((element) => element.remove());
-    for (const element of [clone, ...clone.querySelectorAll('*')]) {
-      for (const attribute of [...element.attributes]) {
-        if (/^(href|src|action|formaction|poster)$/i.test(attribute.name)) element.setAttribute(attribute.name, '[redacted-url]');
-      }
-    }
-    const redact = (element: Element) => {
-      for (const attribute of [...element.attributes]) {
-        if (/^(value|srcdoc|placeholder|title|alt|aria-label|aria-description|aria-labelledby|aria-describedby)$/i.test(attribute.name) || /^(data-.+)$/i.test(attribute.name)) {
-          element.setAttribute(attribute.name, '[redacted]');
-        }
-      }
-      if (element.matches('input, textarea, select, [contenteditable]')) element.setAttribute('value', '[redacted]');
-      if (!element.matches('input')) element.textContent = '[redacted]';
-    };
-    const nodes = [clone, ...clone.querySelectorAll('*')];
-    const sensitive = new Set<Element>();
-    for (const element of nodes) if (element.matches(form)) sensitive.add(element);
-    for (const selector of extra) {
-      for (const element of nodes) if (element.matches(selector)) sensitive.add(element);
-    }
-    // A form control's visible label and ID-referenced name/description are
-    // part of the same private field. Redact these nodes in the clone before
-    // serializing, instead of relying solely on post-serialization matching.
-    for (const element of sensitive) {
-      for (const attribute of ['aria-labelledby', 'aria-describedby']) {
-        for (const id of (element.getAttribute(attribute) ?? '').split(/\s+/)) {
-          if (!id) continue;
-          for (const candidate of nodes) if (candidate.getAttribute('id') === id) sensitive.add(candidate);
-        }
-      }
-      if (element.matches('input, textarea, select')) {
-        for (const label of nodes) {
-          if (label.matches('label') && (label.getAttribute('for') === element.getAttribute('id') || label.querySelector(form))) sensitive.add(label);
-        }
-      }
-    }
-    sensitive.forEach(redact);
-    return clone.outerHTML;
-  }, { form: FORM_SELECTOR, extra: maskSelectors });
+  const operation: CloneOperation = {
+    form: FORM_SELECTOR,
+    extra: maskSelectors,
+    mode: 'serialize',
+  };
+  return page.locator(rootSelector).first().evaluate(scrubClone, operation);
+}
+
+async function scrubbedAria(page: CaptureContext['page'], rootSelector: string, maskSelectors: string[]): Promise<string> {
+  const snapshotId = `journey-receipt-snapshot-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  const operation: CloneOperation = {
+    form: FORM_SELECTOR,
+    extra: maskSelectors,
+    mode: 'mount',
+    snapshotId,
+  };
+  await page.locator(rootSelector).first().evaluate(scrubClone, operation);
+  const host = page.locator(`[data-journey-receipt-snapshot=${JSON.stringify(snapshotId)}]`);
+  try {
+    return await host.locator(':scope > *').ariaSnapshot();
+  } finally {
+    await host.evaluate((element) => element.remove()).catch(() => undefined);
+  }
 }
 
 export async function captureEvidence(context: CaptureContext): Promise<ReceiptEvidence> {
@@ -206,7 +269,7 @@ export async function captureEvidence(context: CaptureContext): Promise<ReceiptE
   }
 
   try {
-    const raw = await page.locator(options.domSelector).first().ariaSnapshot();
+    const raw = await scrubbedAria(page, options.domSelector, validSelectors.slice(1));
     const aria = truncateUtf8(redactText(raw, secrets), options.maxAriaBytes);
     evidence.aria = aria.value;
     if (aria.truncated) truncated.push('ARIA');

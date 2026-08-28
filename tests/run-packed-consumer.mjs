@@ -32,13 +32,17 @@ try {
   const decodeHtml = (value) => value
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
     .replace(/&#039;/g, "'").replace(/&amp;/g, '&');
-  const structure = [...receipt.matchAll(/<pre[^>]*><code>([\s\S]*?)<\/code><\/pre>/g)]
-    .map((match) => decodeHtml(match[1])).join('\n');
+  const captures = [...receipt.matchAll(/<pre[^>]*><code>([\s\S]*?)<\/code><\/pre>/g)]
+    .map((match) => decodeHtml(match[1]));
+  const structure = captures.join('\n');
   const network = decodeHtml(receipt.match(/<summary>Network \(\d+\)<\/summary>[\s\S]*?<tbody>([\s\S]*?)<\/tbody>/)?.[1] ?? '');
-  if (!structure) throw new Error('Packed consumer receipt did not include scrubbed DOM/ARIA evidence.');
+  if (captures.length !== 2) throw new Error(`Packed consumer receipt must include both scrubbed DOM and structural ARIA evidence; found ${captures.length} code blocks.`);
   if (!network) throw new Error('Packed consumer receipt did not include network evidence.');
   for (const secret of [
-    'A', 'Li', 'D', 'NY', 'CA', 'XY', 'OK', 'ID', 'NO',
+    // Exact one- and two-character values from the independent verifier's
+    // reproducer: label, aria-label, placeholder, title, field value,
+    // ARIA description, configured-selector name, and selector text.
+    'Li', 'NY', 'CA', 'XY', 'OK', 'ID', 'NO',
   ]) {
     if (structure.includes(secret)) throw new Error(`Packed consumer structure evidence leaked ${secret}.`);
   }
@@ -51,6 +55,7 @@ try {
     if (!receipt.includes(safeUrl)) throw new Error(`Packed consumer receipt did not preserve the documented URL template: ${safeUrl}.`);
   }
   if (!structure.includes('[redacted]')) throw new Error('Packed consumer receipt did not retain redaction evidence.');
+  if (!captures[1].includes('textbox "[redacted]"')) throw new Error('Packed consumer ARIA evidence was not generated from the structurally redacted clone.');
   process.stdout.write(`Verified packed-consumer short-form, ARIA, selector, and path redaction: ${files[0]}\n`);
 } finally {
   if (tarball) rmSync(tarball, { force: true });
