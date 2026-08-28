@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 — 2026-08-28
+
+- Redact one- and two-character field, label, accessible-name, accessible-description, and configured-selector values in receipts.
+- Redact every network URL path segment by default, retaining only the origin and path shape.
+- Add packed-consumer privacy regressions for short accessibility content and name-, slug-, and nonnumeric-ID URL paths.
+
 ## 0.1.1 — 2026-08-28
 
 - Redact form and configured-selector accessible names, descriptions, and associated labels before ARIA evidence is persisted.

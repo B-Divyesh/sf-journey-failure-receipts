@@ -4,18 +4,34 @@ const test = createReceiptTest({
   outputDir: 'receipts',
   maskSelectors: ['[data-private]'],
   domSelector: 'main',
+  maxScreenshotBytes: 1,
 });
 
-test('redacts accessibility names from a packed consumer receipt', async ({ page, receipt }) => {
+test('redacts short form and configured-selector accessibility content from a packed consumer receipt', async ({ page, receipt }) => {
+  await page.route('https://api.example.test/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      body: '{}',
+      headers: { 'access-control-allow-origin': '*' },
+    });
+  });
   await page.setContent(`
     <main>
-      <label for="account">ASSOCIATED_LABEL_UNIQUE_SECRET</label>
-      <input id="account" aria-label="ARIALABEL_UNIQUE_SECRET" aria-describedby="account-description" value="FORMVALUE_UNIQUE_SECRET">
-      <p id="account-description">ARIA_DESCRIPTION_UNIQUE_SECRET</p>
-      <p data-private aria-label="MASKARIA_UNIQUE_SECRET">MASKED_VISIBLE_TEXT</p>
+      <label for="account">A</label>
+      <input id="account" aria-label="Li" aria-description="D" aria-describedby="account-description"
+        placeholder="NY" title="CA" value="XY">
+      <p id="account-description">OK</p>
+      <p data-private aria-label="ID">NO</p>
       <output data-testid="status">before receipt</output>
     </main>
   `);
+  await page.evaluate(async () => {
+    await Promise.all([
+      fetch('https://api.example.test/customers/ALICE_UNIQUE?token=QUERY_SECRET'),
+      fetch('https://api.example.test/accounts/customer-slug'),
+      fetch('https://api.example.test/orders/abc123'),
+    ]);
+  });
 
   const result = await receipt.soft('privacy boundary', async () => {
     await expect(page.getByTestId('status')).toHaveText('expected value', { timeout: 200 });

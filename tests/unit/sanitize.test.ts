@@ -12,9 +12,13 @@ describe('privacy scrubbing', () => {
     expect(output).not.toContain('private-value');
   });
 
-  it('drops query strings, fragments, credentials, and identifier-like path segments', () => {
-    const output = safeUrl('https://user:pass@example.test/customers/550e8400-e29b-41d4-a716-446655440000?token=secret#private');
-    expect(output).toBe('https://example.test/customers/:redacted');
+  it('keeps only the URL origin and redacted path shape', () => {
+    expect(safeUrl('https://user:pass@example.test/customers/ALICE_UNIQUE?token=secret#private'))
+      .toBe('https://example.test/:redacted/:redacted');
+    expect(safeUrl('https://example.test/accounts/customer-slug'))
+      .toBe('https://example.test/:redacted/:redacted');
+    expect(safeUrl('https://example.test/orders/abc123'))
+      .toBe('https://example.test/:redacted/:redacted');
   });
 
   it('truncates by UTF-8 bytes and escapes receipt markup', () => {

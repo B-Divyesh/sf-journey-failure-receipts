@@ -28,7 +28,7 @@ async function sensitiveValues(page: CaptureContext['page'], selectors: string[]
     const add = (value: unknown) => {
       if (typeof value !== 'string') return;
       const trimmed = value.trim();
-      if (trimmed.length < 3) return;
+      if (!trimmed) return;
       values.add(trimmed);
       values.add(trimmed.replace(/\s+/g, ' '));
     };
@@ -59,7 +59,7 @@ async function sensitiveValues(page: CaptureContext['page'], selectors: string[]
     for (const selector of extra) {
       for (const element of document.querySelectorAll(selector)) addAccessibleText(element);
     }
-    return [...values].slice(0, 300);
+    return [...values];
   }, { form: FORM_SELECTOR, extra: selectors });
 }
 
@@ -98,16 +98,36 @@ async function scrubbedDom(page: CaptureContext['page'], rootSelector: string, m
     }
     const redact = (element: Element) => {
       for (const attribute of [...element.attributes]) {
-        if (/^(value|srcdoc)$/i.test(attribute.name) || /^(data-.+|aria-label)$/i.test(attribute.name)) element.setAttribute(attribute.name, '[redacted]');
+        if (/^(value|srcdoc|placeholder|title|alt|aria-label|aria-description|aria-labelledby|aria-describedby)$/i.test(attribute.name) || /^(data-.+)$/i.test(attribute.name)) {
+          element.setAttribute(attribute.name, '[redacted]');
+        }
       }
-      if (element.matches('input, textarea, select')) element.setAttribute('value', '[redacted]');
+      if (element.matches('input, textarea, select, [contenteditable]')) element.setAttribute('value', '[redacted]');
       if (!element.matches('input')) element.textContent = '[redacted]';
     };
-    clone.querySelectorAll(form).forEach(redact);
+    const nodes = [clone, ...clone.querySelectorAll('*')];
+    const sensitive = new Set<Element>();
+    for (const element of nodes) if (element.matches(form)) sensitive.add(element);
     for (const selector of extra) {
-      if (clone.matches(selector)) redact(clone);
-      clone.querySelectorAll(selector).forEach(redact);
+      for (const element of nodes) if (element.matches(selector)) sensitive.add(element);
     }
+    // A form control's visible label and ID-referenced name/description are
+    // part of the same private field. Redact these nodes in the clone before
+    // serializing, instead of relying solely on post-serialization matching.
+    for (const element of sensitive) {
+      for (const attribute of ['aria-labelledby', 'aria-describedby']) {
+        for (const id of (element.getAttribute(attribute) ?? '').split(/\s+/)) {
+          if (!id) continue;
+          for (const candidate of nodes) if (candidate.getAttribute('id') === id) sensitive.add(candidate);
+        }
+      }
+      if (element.matches('input, textarea, select')) {
+        for (const label of nodes) {
+          if (label.matches('label') && (label.getAttribute('for') === element.getAttribute('id') || label.querySelector(form))) sensitive.add(label);
+        }
+      }
+    }
+    sensitive.forEach(redact);
     return clone.outerHTML;
   }, { form: FORM_SELECTOR, extra: maskSelectors });
 }

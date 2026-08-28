@@ -6,7 +6,10 @@ const CARDISH = /\b(?:\d[ -]*?){13,19}\b/g;
 
 export function redactText(input: string, secrets: string[] = []): string {
   let result = input;
-  for (const secret of secrets.filter((value) => value.length >= 3).sort((a, b) => b.length - a.length)) {
+  // Values come from fields and explicitly configured private selectors. Even
+  // one-character values can be customer data, so never discard them based on
+  // length before evidence is persisted.
+  for (const secret of secrets.filter((value) => value.length > 0).sort((a, b) => b.length - a.length)) {
     result = result.split(secret).join('[redacted]');
   }
   return result
@@ -20,14 +23,11 @@ export function redactText(input: string, secrets: string[] = []): string {
 export function safeUrl(raw: string): string {
   try {
     const url = new URL(raw);
-    const safeSegments = url.pathname.split('/').map((segment) => {
-      const decoded = decodeURIComponent(segment);
-      if (/^[0-9]{5,}$/.test(decoded) || /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(decoded) || /@/.test(decoded) || decoded.length > 48) {
-        return ':redacted';
-      }
-      return encodeURIComponent(decoded);
-    });
-    return `${url.protocol}//${url.host}${safeSegments.join('/')}`;
+    // A URL path is application data, not trustworthy route metadata: account
+    // names, slugs, and short opaque IDs commonly appear in ordinary-looking
+    // segments. Preserve only the origin and path shape.
+    const pathTemplate = url.pathname.split('/').map((segment) => segment ? ':redacted' : '').join('/');
+    return `${url.protocol}//${url.host}${pathTemplate}`;
   } catch {
     return '[invalid URL]';
   }

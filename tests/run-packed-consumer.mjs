@@ -29,14 +29,29 @@ try {
   const files = readdirSync(resolve(consumer, 'receipts')).filter((file) => file.endsWith('.html'));
   if (files.length !== 1) throw new Error(`Expected one packed-consumer receipt; found ${files.length}.`);
   const receipt = readFileSync(resolve(consumer, 'receipts', files[0]), 'utf8');
+  const decodeHtml = (value) => value
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'").replace(/&amp;/g, '&');
+  const structure = [...receipt.matchAll(/<pre[^>]*><code>([\s\S]*?)<\/code><\/pre>/g)]
+    .map((match) => decodeHtml(match[1])).join('\n');
+  const network = decodeHtml(receipt.match(/<summary>Network \(\d+\)<\/summary>[\s\S]*?<tbody>([\s\S]*?)<\/tbody>/)?.[1] ?? '');
+  if (!structure) throw new Error('Packed consumer receipt did not include scrubbed DOM/ARIA evidence.');
+  if (!network) throw new Error('Packed consumer receipt did not include network evidence.');
   for (const secret of [
-    'FORMVALUE_UNIQUE_SECRET', 'ARIALABEL_UNIQUE_SECRET', 'ASSOCIATED_LABEL_UNIQUE_SECRET',
-    'ARIA_DESCRIPTION_UNIQUE_SECRET', 'MASKARIA_UNIQUE_SECRET', 'MASKED_VISIBLE_TEXT',
+    'A', 'Li', 'D', 'NY', 'CA', 'XY', 'OK', 'ID', 'NO',
   ]) {
-    if (receipt.includes(secret)) throw new Error(`Packed consumer receipt leaked ${secret}.`);
+    if (structure.includes(secret)) throw new Error(`Packed consumer structure evidence leaked ${secret}.`);
   }
-  if (!receipt.includes('[redacted]')) throw new Error('Packed consumer receipt did not retain redaction evidence.');
-  process.stdout.write(`Verified packed-consumer ARIA redaction: ${files[0]}\n`);
+  for (const secret of ['ALICE_UNIQUE', 'customer-slug', 'abc123', 'QUERY_SECRET']) {
+    if (network.includes(secret)) throw new Error(`Packed consumer network evidence leaked ${secret}.`);
+  }
+  for (const safeUrl of [
+    'https://api.example.test/:redacted/:redacted',
+  ]) {
+    if (!receipt.includes(safeUrl)) throw new Error(`Packed consumer receipt did not preserve the documented URL template: ${safeUrl}.`);
+  }
+  if (!structure.includes('[redacted]')) throw new Error('Packed consumer receipt did not retain redaction evidence.');
+  process.stdout.write(`Verified packed-consumer short-form, ARIA, selector, and path redaction: ${files[0]}\n`);
 } finally {
   if (tarball) rmSync(tarball, { force: true });
   rmSync(consumer, { recursive: true, force: true });

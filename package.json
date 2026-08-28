@@ -1,6 +1,6 @@
 {
   "name": "journey-failure-receipts",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Scrubbed assertion-level evidence receipts for Playwright journeys",
   "license": "MIT",
   "author": "Sociobot (Param Factory)",
