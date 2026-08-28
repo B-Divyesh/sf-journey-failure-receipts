@@ -1,19 +1,49 @@
-# Journey Failure Receipts — review-1 handoff
+# Journey Failure Receipts — perfection-loop round 1 handoff
 
-**Review result:** **FAIL**. Product source was not changed.
+## Delivered
 
-I wrote the adversarial first-read report in [review-1.md](review-1.md). It records four BLOCKING issues: the first screen does not state the audience or clear first action, there is no one-click isolated library playground, `.factory/claims.json` and tagged claim tests are absent, and `/demo` plus the 404 experience are broken. It also contains the complete landing/README copy audit, unlisted-claim inventory, metadata/shell findings, and concrete retest work.
+- Repaired candidate `6e762524b43e58081d107783251f6e7b552e2d57` in `07333aac4d82343cd1e3c96bdda7a292f8c106c2`, with test typing follow-up `50ff47ea6fe107b47c1ed160616b4376f3efe78b`.
+- Replaced the ambiguous first screen with a plain job headline, audience sentence, and one primary **Try it with sample data** action.
+- Added `/demo/?demo=1`, `/?demo=1` redirect support, editable bundled sample input, a persistent demo banner, Reset demo, Start for real, and isolated `demo:journey-failure-receipts:sample` storage.
+- Added a browser-safe `createSampleReceipt` package export used by the playground.
+- Added `.factory/claims.json`, one tagged test per claim, `.factory/demo.md`, catalog description, and copy audit.
+- Added route metadata, canonical/OG/Twitter tags, hand-drawn 1200×630 share art, apple-touch icon, consistent legal links, `/404.html`, a static-host 404 response override, sitemap demo route, focus announcement, and mobile code-region keyboard access.
+- Preserved the blueprint drafting-sheet visual system; the new art provenance is in `.factory/design.md`.
 
-Verification performed:
+## Verification evidence
+
+Final clean clone: `/tmp/tmp.b7EnJZqNH0/repo` at `50ff47ea6fe107b47c1ed160616b4376f3efe78b`.
 
 ```sh
-# clean clone used for product gates
-cd /tmp/jfr-review-clean.1dWYS6
+npm ci
+npm run typecheck
+npm test
+npm run build
+npm pack --dry-run
+npm run test:e2e
+npm run test:consumer
+npm run test:claims -- --grep @claim:sample-receipt
+npm run test:claims -- --grep @claim:sample-redaction
+npm run test:claims -- --grep @claim:demo-reset-isolation
+npm run test:claims -- --grep @claim:demo-no-upload
+npm run test:claims -- --grep @claim:offline-demo
+npm run test:unit -- --testNamePattern @claim:mit-license
+```
+
+All commands passed. `npm test` ran 5 unit tests, fixture receipt flow, packed-consumer privacy flow, and 8 site Playwright tests. The intentional assertion failures in fixture/consumer tests are expected; their wrappers prove receipt generation, redaction, and continued test flow before success.
+
+The browser suite runs Axe at desktop and 390×844, finds no serious/critical violations, verifies no mobile overflow, the worker-backed offline demo, same-origin demo traffic, metadata, route focus, legal pages, and static budgets. Built output: JavaScript 3.63 kB, CSS 18.90 kB, hero WebP below 300 kB. `/opt/fleet/lib/verify-url.sh` passed locally for `/` and `/demo/`, with no console errors, one `h1`, `lang=en`, a main landmark, and no missing image alt text.
+
+## Run and deploy
+
+```sh
 npm ci
 npm test
 npm run build
 ```
 
-Those quality gates completed and produced `dist/site`; they do not satisfy the missing claims contract. Fresh live Chromium checks used 390×844 and 1440×900 contexts. The static landing page made only same-origin requests and had no console/page errors, but `/demo` returned the Azure default 404 and `?demo=1` contained no demo banner, reset, start-for-real control, editable playground, or `demo:` storage namespace.
+Deploy `dist/site` as the static work-order artifact. The factory owns npm publishing; use `npm pack` to prepare the tarball.
 
-Next work is product implementation, not reviewer work: ship the demo/playground and docs, register/test every claim in the isolated sandbox, then repair route/404/metadata/shell and revise copy before a new first-read review.
+## Known gaps
+
+No known blocking findings remain. The emitted static-host configuration contains the 404 response override; final HTTP-status confirmation occurs on deployment.
