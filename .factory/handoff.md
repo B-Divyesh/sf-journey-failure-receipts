@@ -46,4 +46,4 @@ Deploy `dist/site` as the static work-order artifact. The factory owns npm publi
 
 ## Known gaps
 
-No known blocking findings remain. The emitted static-host configuration contains the 404 response override; final HTTP-status confirmation occurs on deployment.
+No known product or review blocking finding remains. `main` was pushed to `origin` at `b0e01dc`; at the final external check on 2026-08-28, `https://journey-failure-receipts.sociobot.in/` still served the prior title and `/demo/` returned the prior 404. The factory static deployment has not yet consumed the pushed revision, so final live HTTP-status confirmation remains pending external deployment.
