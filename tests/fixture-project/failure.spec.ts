@@ -7,7 +7,7 @@ const test = createReceiptTest({
   maxReceipts: 2,
 });
 
-test('continues after freezing a failed assertion', async ({ page, receipt }) => {
+test('@claim:receipt-capture continues after freezing a failed assertion', async ({ page, receipt }) => {
   await page.route('https://api.example.test/**', (route) => route.fulfill({ status: 200, body: '{}' }));
   await page.setContent(`
     <main>

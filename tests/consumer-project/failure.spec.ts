@@ -7,7 +7,7 @@ const test = createReceiptTest({
   maxScreenshotBytes: 1,
 });
 
-test('redacts short form and configured-selector accessibility content from a packed consumer receipt', async ({ page, receipt }) => {
+test('@claim:package-redaction redacts short form and configured-selector accessibility content from a packed consumer receipt', async ({ page, receipt }) => {
   await page.route('https://api.example.test/**', async (route) => {
     await route.fulfill({
       status: 200,

@@ -1,8 +1,12 @@
 # Journey Failure Receipts
 
-Capture the exact visual and DOM state when a critical Playwright journey assertion fails—not whatever state remains when the test finally ends.
+Capture each failed Playwright assertion as a local HTML receipt.
 
-Journey Failure Receipts is a small, local-first Playwright fixture and reporter for teams diagnosing `expect.soft()`-style failures in checkout, sign-in, and other multi-step flows. Each failed wrapped assertion produces one scrubbed, self-contained HTML receipt with a screenshot, selected DOM and ARIA snapshot, console errors, and a metadata-only network summary. It has no telemetry, service, or runtime dependency beyond Playwright.
+For test teams, the receipt keeps the page evidence from a soft failure before later steps change the flow. The wrapped assertion saves a receipt and the test flow continues. See the tested claim in [`.factory/claims.json`](.factory/claims.json).
+
+## Try the sample
+
+Open `https://journey-failure-receipts.sociobot.in/demo/?demo=1`. Change the bundled checkout sample and create an editable receipt. The demo state uses a `demo:` browser-storage key. **Reset demo** restores the bundled values.
 
 ## Install
 
@@ -10,9 +14,7 @@ Journey Failure Receipts is a small, local-first Playwright fixture and reporter
 npm install --save-dev journey-failure-receipts @playwright/test
 ```
 
-## Usage
-
-Create a project fixture:
+Create a receipt test fixture:
 
 ```ts
 // fixtures.ts
@@ -27,7 +29,7 @@ export const test = createReceiptTest({
 export { expect };
 ```
 
-Wrap assertions that may fail softly. Use regular `expect`, not `expect.soft`, inside the callback; `receipt.soft` catches the failure only after freezing its evidence and then records it as a Playwright soft failure.
+Wrap the soft assertion that needs a receipt:
 
 ```ts
 import { test, expect } from './fixtures';
@@ -40,12 +42,11 @@ test('customer can add an item', async ({ page, receipt }) => {
     await expect(page.getByTestId('cart-count')).toHaveText('1');
   });
 
-  // The journey continues and another failure receives its own receipt.
   await page.getByRole('link', { name: 'Checkout' }).click();
 });
 ```
 
-Add the optional reporter to print receipt locations in CI:
+Use `expect`, not `expect.soft`, inside the callback. Optional CI output:
 
 ```ts
 // playwright.config.ts
@@ -54,22 +55,15 @@ export default {
 };
 ```
 
-Receipts are ordinary self-contained `.html` files with an embedded, bounded screenshot. Open them directly; no server, account, or network connection is required.
+## Privacy controls
 
-## Privacy defaults
+Use `maskSelectors` for private content outside form fields. The packaged receipt removes form and configured-selector values from DOM and accessibility evidence. The packed-consumer claim test covers labels, ARIA text, and selector text.
 
-- Every `input`, `textarea`, `select`, and `[contenteditable]` is masked in screenshots and redacted in DOM and ARIA captures. ARIA evidence is generated from a temporary scrubbed clone—not the live page—so accessible names, descriptions, and associated label text are structurally redacted even when they are one or two characters long.
-- Add `maskSelectors` for customer data rendered outside form controls; their text and accessible names/descriptions are structurally redacted in every capture.
-- Request and response bodies are never captured. Network entries contain only method, resource type, status, duration, and a URL template: the origin is retained while **every nonempty path segment** becomes `:redacted`. Query strings, fragments, and URL credentials are discarded.
-- Authorization, cookies, query strings, URL credentials, and fragment values are discarded.
-- Limits default to 5 receipts/test, 40 network entries, 20 console errors, 80 KB DOM, and 40 KB ARIA text. Configure lower caps for sensitive suites.
-- Files remain local in your configured output directory. There is no telemetry.
+Review generated CI artifacts and set your own retention policy.
 
 ## API
 
 `createReceiptTest(options?)` returns a Playwright `test` extended with a worker-safe `receipt` fixture.
-
-`receipt.soft(label, assertion)` runs the assertion, returns its value on success, or captures a receipt and records a soft test error on failure. The test continues. It returns `undefined` after a failure.
 
 | Option | Default | Purpose |
 | --- | --- | --- |
@@ -77,33 +71,36 @@ Receipts are ordinary self-contained `.html` files with an embedded, bounded scr
 | `maskSelectors` | `[]` | Additional selectors to redact and screenshot-mask |
 | `domSelector` | `body` | Subtree used for DOM and ARIA capture |
 | `maxReceipts` | `5` | Maximum receipts generated per test |
-| `maxNetworkEntries` | `40` | Most recent metadata-only request entries |
+| `maxNetworkEntries` | `40` | Most recent request entries |
 | `maxConsoleEntries` | `20` | Most recent errors and warnings |
 | `maxDomBytes` | `81920` | UTF-8 cap for scrubbed DOM |
 | `maxAriaBytes` | `40960` | UTF-8 cap for ARIA snapshot |
 | `maxScreenshotBytes` | `1500000` | Omit screenshots above this byte cap |
 | `screenshot` | `{ type: 'jpeg', quality: 72 }` | Screenshot format and quality |
 
-Invalid selectors and unavailable pages do not hide the assertion: the receipt records the capture error and the soft failure still reaches Playwright.
-
 ## Develop and verify
 
-Requires Node 20+.
+Requires Node 20 or later.
 
 ```sh
 npm ci
+npm run typecheck
 npm test
 npm run build
 npm pack --dry-run
 ```
 
-`npm run build` produces ESM, CommonJS, and `.d.ts` package files in `dist/package`, then builds the documentation/demo site into `dist/site` with `index.html` at its root. Use `npm run dev` for the site.
+Run every listed visitor claim from a clean checkout:
 
-Deploy the contents of `dist/site` to any static host. The factory deployment target is `https://journey-failure-receipts.sociobot.in`; registry publishing is handled separately by the factory.
+```sh
+node -e "for (const c of require('./.factory/claims.json')) console.log(c.test)"
+```
+
+The static documentation and demo build to `dist/site`. Run `npm run dev` to preview the site. The factory handles npm publishing and static deployment.
 
 ## Scope
 
-This is assertion-level evidence for suites you already run. It is not hosted monitoring, test orchestration, trace replacement, visual regression, or an uploader.
+Use this with Playwright tests you already run. It does not run tests, monitor sites, compare screenshots, or upload receipts.
 
 ## License
 

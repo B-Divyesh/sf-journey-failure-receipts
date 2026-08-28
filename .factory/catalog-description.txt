@@ -1,0 +1,1 @@
+Capture failed Playwright assertions as scrubbed local HTML receipts.

@@ -50,6 +50,7 @@
     "test:e2e": "node tests/run-fixture-smoke.mjs",
     "test:consumer": "node tests/run-packed-consumer.mjs",
     "test:site": "playwright test --config tests/site/playwright.config.ts",
+    "test:claims": "playwright test --config tests/site/playwright.config.ts",
     "test": "npm run test:unit && npm run test:e2e && npm run test:consumer && npm run test:site",
     "typecheck": "tsc --noEmit"
   },

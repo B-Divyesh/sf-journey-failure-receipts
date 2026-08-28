@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { renderReceipt } from '../../src/receipt.js';
 
 describe('static receipt', () => {
@@ -12,5 +14,9 @@ describe('static receipt', () => {
     expect(html).toContain('&lt;Cart count&gt;');
     expect(html).toContain('No console warnings or errors');
     expect(html).not.toContain('<script');
+  });
+
+  it('@claim:mit-license ships under the MIT License', () => {
+    expect(readFileSync(resolve(import.meta.dirname, '../../LICENSE'), 'utf8')).toContain('MIT License');
   });
 });
