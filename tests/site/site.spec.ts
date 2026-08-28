@@ -38,7 +38,7 @@ test('@claim:sample-redaction masks the private sample field', async ({ page }) 
 });
 
 test('@claim:demo-reset-isolation keeps sample state in demo storage and resets it', async ({ page }) => {
-  await page.addInitScript(() => { const original = Storage.prototype.getItem; (window as Window & { demoReads?: string[] }).demoReads = []; Storage.prototype.getItem = function(key: string) { window.demoReads!.push(key); return original.call(this, key); }; });
+  await page.addInitScript(() => { const current = window as typeof window & { demoReads?: string[] }; const original = Storage.prototype.getItem; current.demoReads = []; Storage.prototype.getItem = function(key: string) { current.demoReads!.push(key); return original.call(this, key); }; });
   await page.goto('/demo/?demo=1');
   await page.evaluate(() => localStorage.setItem('journey-failure-receipts:real', 'REAL_DATA_MUST_NOT_CHANGE'));
   await page.getByLabel('Assertion label').fill('Changed demo value');
@@ -46,7 +46,7 @@ test('@claim:demo-reset-isolation keeps sample state in demo storage and resets 
   await page.getByRole('button', { name: 'Reset demo' }).click();
   await expect(page.getByLabel('Assertion label')).toHaveValue('Cart count increments');
   await expect(page.locator('.demo-banner')).toContainText('Demo — sample data, nothing is saved');
-  expect(await page.evaluate(() => window.demoReads?.every((key) => key === 'demo:journey-failure-receipts:sample'))).toBe(true);
+  expect(await page.evaluate(() => { const current = window as typeof window & { demoReads?: string[] }; return current.demoReads?.every((key: string) => key === 'demo:journey-failure-receipts:sample'); })).toBe(true);
   expect(await page.evaluate(() => localStorage.getItem('journey-failure-receipts:real'))).toBe('REAL_DATA_MUST_NOT_CHANGE');
   expect(await page.evaluate(() => localStorage.getItem('demo:journey-failure-receipts:sample'))).toBeNull();
 });
