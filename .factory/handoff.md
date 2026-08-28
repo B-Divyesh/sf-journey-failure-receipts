@@ -22,7 +22,7 @@ npm pack --dry-run
 
 `npm test` includes 4 unit tests, an intentionally failing nested Playwright test whose wrapper verifies that the journey continues and the receipt contains none of the seeded secrets, plus 5 production-site browser tests (axe, keyboard behavior, legal pages, mobile overflow, offline behavior, and asset budgets). The outer test command passes.
 
-Final verification on 2026-08-27:
+Final verification on 2026-08-28:
 
 - `npm test`: pass
 - `npm run typecheck`: pass
