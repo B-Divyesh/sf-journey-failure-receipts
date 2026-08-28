@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { AxeBuilder } from '@axe-core/playwright';
-import { readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 test('landing page is accessible and the keyboard demo works', async ({ page }) => {
@@ -31,6 +31,13 @@ test('390px layout has no horizontal clipping', async ({ page }) => {
   expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.client);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.getByRole('link', { name: /Add to Playwright/ })).toBeVisible();
+  const installation = page.getByLabel(/Installation example/);
+  await expect(installation).toHaveAttribute('tabindex', '0');
+  await installation.focus();
+  await expect(installation).toBeFocused();
+  const results = await new AxeBuilder({ page }).analyze();
+  const serious = results.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical');
+  expect(serious, serious.map((item) => `${item.id}: ${item.help}`).join('\n')).toEqual([]);
 });
 
 test('legal pages have a single main heading', async ({ page }) => {
@@ -63,4 +70,15 @@ test('built assets stay inside the static performance budget', () => {
   expect(jsBytes).toBeLessThanOrEqual(200 * 1024);
   expect(cssBytes).toBeLessThanOrEqual(50 * 1024);
   expect(heroBytes).toBeLessThanOrEqual(300 * 1024);
+  const headers = resolve(root, '_headers');
+  const staticWebAppConfig = resolve(root, 'staticwebapp.config.json');
+  const serviceWorker = resolve(root, 'sw.js');
+  expect(readFileSync(headers, 'utf8')).toContain('Content-Security-Policy');
+  expect(readFileSync(headers, 'utf8')).toContain('max-age=31536000, immutable');
+  expect(JSON.parse(readFileSync(staticWebAppConfig, 'utf8')).routes).toEqual(expect.arrayContaining([
+    expect.objectContaining({ route: '/assets/*' }),
+    expect.objectContaining({ route: '/sw.js' }),
+  ]));
+  expect(readFileSync(serviceWorker, 'utf8')).toContain('self.skipWaiting()');
+  expect(readFileSync(serviceWorker, 'utf8')).toContain('self.clients.claim()');
 });

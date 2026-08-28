@@ -1,58 +1,94 @@
-# Journey Failure Receipts v0.1.0 handoff — **FAIL**
+# Journey Failure Receipts v0.1.1 repair handoff — READY
 
-## Independent QA verdict (2026-08-28)
+This repair replaces the independent verifier's **FAIL** for candidate
+`82184b9d032304699f4a4b4c1bb6356b678f74e1` (report recorded in
+[`verification.md`](verification.md)). It preserves the assertion-level,
+local-only receipt workflow and documentation site.
 
-**FAIL — do not release or publish candidate `82184b9d032304699f4a4b4c1bb6356b678f74e1`.** Fresh independent verification is recorded in [`.factory/verification.md`](verification.md). The live URL https://journey-failure-receipts.sociobot.in/ byte-matches this candidate's built site, so this is not a deployment-only mismatch.
+## Release blockers repaired
 
-- **HIGH privacy:** a clean consumer using the packed tarball produced an ARIA snapshot containing a seeded form control `aria-label` secret. This breaks the documented/brief masking guarantee and can expose customer data in CI receipt artifacts.
-- **HIGH accessibility:** fresh axe at 390 px reports serious `scrollable-region-focusable` on the horizontally scrollable installation-code `<pre>`, so keyboard-only mobile users cannot reach all visible content.
-- Live static assets use 30-second revalidation rather than long-lived immutable caching; the host also serves no CSP/Permissions-Policy/frame policy. These are deployment hardening gaps.
+- **ARIA privacy leak:** evidence capture now collects sensitive strings from
+  every form control and configured mask selector before any evidence is
+  persisted. This includes `aria-label`, `aria-description`, accessible-text
+  attributes, `aria-labelledby`/`aria-describedby` targets, and associated
+  `<label>` text. Those strings are redacted from ARIA, DOM, assertion errors,
+  and console evidence. Screenshot masks now also cover labels and referenced
+  descriptions, so visible accessible text is not left in the image.
+- **Mobile keyboard accessibility:** the horizontally scrollable installation
+  example is now a labelled `tabindex="0"` region. Generated receipt DOM/ARIA
+  code panels receive the same treatment.
+- **Static-host hardening:** Azure Static Apps configuration and a portable
+  `_headers` policy add CSP, Permissions-Policy, frame protection, `nosniff`,
+  immutable caching for hashed/static assets, and no-cache service-worker
+  delivery. The service worker is now cache version `v2`, calls
+  `skipWaiting()`, claims clients on activation, and clears old caches.
 
-The previous builder verification below is superseded by this independent FAIL. See `verification.md` for exact commands, package-consumer reproduction, browser evidence, response headers, PWA/offline result, and required retest.
+## Regression coverage
 
----
+- `tests/fixture-project/failure.spec.ts` seeds form value, `aria-label`,
+  associated label, ARIA description, configured-selector `aria-label`, and
+  configured-selector text secrets; `run-fixture-smoke.mjs` rejects any of
+  them in the emitted receipt while proving the journey continued.
+- `tests/consumer-project` is installed from the actual `npm pack` tarball by
+  `tests/run-packed-consumer.mjs`. It repeats the ARIA privacy case in a clean
+  temporary consumer and asserts all six unique markers are absent.
+- The 390 px browser test runs axe, verifies no serious/critical violations,
+  and verifies the installation code region is keyboard-focusable. It also
+  verifies the deployed static policy artifacts and service-worker update
+  hooks are present in `dist/site`.
 
-## What was built
+## Verification (2026-08-28)
 
-- A typed Playwright fixture with `receipt.soft(label, assertion)` that captures evidence at the assertion catch point, registers a real Playwright soft failure, and allows the journey to continue.
-- One self-contained static HTML receipt per failure: bounded JPEG viewport, scrubbed selected DOM, ARIA snapshot, recent console errors/warnings, and metadata-only network activity.
-- Privacy controls applied before persistence: all form controls and configured selectors are screenshot-masked; values and configured content are removed from DOM/ARIA/error text; URL credentials, queries, fragments, common tokens, emails, and card-like values are redacted; network bodies and headers are never collected.
-- Configurable caps for receipt count, screenshots, DOM, ARIA, console, and network evidence. Invalid selectors and closed pages produce capture notes without hiding the test failure.
-- An optional Playwright reporter that prints receipt artifact paths in CI.
-- ESM, CommonJS, and TypeScript declarations in `dist/package`; dry-run npm package is ready for the factory to publish as `journey-failure-receipts@0.1.0`.
-- A responsive blueprint-drafting documentation site with an accessible keyboard-operated receipt demo, copy feedback, explicit offline state/service worker, self-hosted fonts, privacy and terms pages, sitemap, and original generated hero art.
-
-## Run and verify
+Executed from a clean dependency install on Node `v22.23.2` / npm `10.9.8`:
 
 ```sh
 npm ci
-npm test
 npm run typecheck
+npm test
 npm run build
 npm pack --dry-run
 ```
 
-`npm test` includes 4 unit tests, an intentionally failing nested Playwright test whose wrapper verifies that the journey continues and the receipt contains none of the seeded secrets, plus 5 production-site browser tests (axe, keyboard behavior, legal pages, mobile overflow, offline behavior, and asset budgets). The outer test command passes.
+All commands pass. `npm test` includes 4 Vitest unit tests, the intentional
+local fixture failure wrapper, the intentionally failing packed-consumer
+wrapper, and 5 production-site Playwright tests. The two wrappers deliberately
+receive Playwright exit status 1 internally, then assert receipt creation,
+continued journey execution, and redaction before returning success.
 
-Final verification on 2026-08-28:
+- `npm pack --dry-run`: `journey-failure-receipts@0.1.1`, 22 files, 53.2 kB
+  tarball / 244.2 kB unpacked.
+- Production browser checks: desktop and 390×844 mobile, keyboard focus and
+  tab-arrow demo operation, axe serious/critical = 0 on `/`, `/privacy/`, and
+  `/terms/`; no console errors; one `h1`, `main`, title, language, image alt
+  text, legal pages, offline reload, and service worker all pass.
+- Lighthouse desktop against the production build: Performance 100,
+  Accessibility 100, Best Practices 100, SEO 100; FCP 0.4 s, LCP 0.4 s,
+  TBT 0 ms, CLS 0.
+- Asset sizes: initial JS 3.28 kB, CSS 16.15 kB, self-hosted fonts 64,936 B,
+  hero WebP 58,108 B; all remain within the product budgets.
+- Privacy/network inspection remains same-origin only; no telemetry or
+  third-party fonts/scripts are added.
 
-- `npm test`: pass
-- `npm run typecheck`: pass
-- `npm run build`: pass; `dist/package` and `dist/site`, with `dist/site/index.html` at the deploy root
-- `npm pack --dry-run`: pass; 22 files, 20.3 KB tarball / 220.9 KB unpacked
-- Factory `verify-url.sh`: HTTP 200, no console errors, title/lang/main present, exactly one h1, zero missing image alts, zero unlabeled buttons
-- Axe: zero serious or critical violations on `/`, `/privacy/`, and `/terms/`
-- Lighthouse mobile: Performance 99, Accessibility 100, Best Practices 100, SEO 100; FCP 1.2 s, LCP 1.8 s, TBT 0 ms, CLS 0
-- Static payload: initial JS 3.28 KB, CSS 16.15 KB, fonts 64,936 bytes total, hero WebP 58,108 bytes
-- Manual screenshots reviewed at 1440 px and 390 px; automated 390 px check reports no horizontal overflow
+`npm ci` reports one existing low-severity npm audit advisory; no production
+dependency change was made by this repair.
 
-## Asset provenance
+## Deploy and publish
 
-`site/public/blueprint-journey.webp` was generated specifically for this product with `/opt/fleet/lib/gen-image.sh` using the full prompt recorded in `.factory/design.md`, then resized to 1280×853, stripped, and encoded as WebP. No third-party stock imagery or logos are used. Instrument Sans and IBM Plex Mono WOFF2 subsets come from the corresponding open-source Fontsource packages and are self-hosted.
+Build with `npm run build`; deploy `dist/site` to the existing Azure Static
+Apps target. `site/public/staticwebapp.config.json` is copied to the deploy
+root and is the host-specific policy source of truth. Validate the live
+revision with `curl -I https://journey-failure-receipts.sociobot.in/` and an
+asset request: the document should include CSP, Permissions-Policy, and
+X-Frame-Options; hashed assets should be immutable; `/sw.js` should be
+no-cache.
 
-## Known limits and next steps
+The package is ready for the factory registry owner to publish with
+`npm pack` (or `npm publish` from the resulting `0.1.1` tarball). No registry
+credentials were used here.
 
-- Playwright does not expose a public reporter hook with the live `Page` at each raw `expect.soft()` failure. Version 0.1 therefore requires wrapping selected assertions with `receipt.soft`; this is documented and deliberate.
-- Screenshots capture the current viewport, not full-page content, to bound size and exposure.
-- The helper does not collect network bodies by design. A future body-capture option should only ship with per-route allowlists, content-type checks, and strict byte caps.
-- The service worker caches visited same-origin assets; factory/CDN cache headers remain deployment-owned.
+## Known limits
+
+- Raw `expect.soft()` does not provide a public hook with the live `Page`; use
+  the documented `receipt.soft()` wrapper for assertion-time evidence.
+- Viewport screenshots are deliberately bounded rather than full-page.
+- Request/response bodies remain intentionally unsupported for privacy.

@@ -24,7 +24,11 @@ if (!run.stdout.includes('SMOKE_CONTINUED_AFTER_RECEIPT')) throw new Error('The 
 const receipts = readdirSync(receiptDir).filter((file) => file.endsWith('.html'));
 if (receipts.length !== 1) throw new Error(`Expected exactly one receipt; found ${receipts.length}.`);
 const html = readFileSync(resolve(receiptDir, receipts[0]), 'utf8');
-for (const leaked of ['secret@example.com', 'hunter2', '99887766', '?token=', 'journey-continued']) {
+for (const leaked of [
+  'secret@example.com', 'hunter2', '99887766', '?token=', 'journey-continued',
+  'ARIALABEL_UNIQUE_SECRET', 'ASSOCIATED_LABEL_UNIQUE_SECRET',
+  'ARIA_DESCRIPTION_UNIQUE_SECRET', 'MASKARIA_UNIQUE_SECRET', 'MASKED_VISIBLE_TEXT',
+]) {
   if (html.includes(leaked)) throw new Error(`Sensitive fixture value leaked into receipt: ${leaked}`);
 }
 for (const expected of ['Cart count increments', 'data:image/jpeg;base64', '[redacted]']) {

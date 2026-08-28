@@ -11,8 +11,10 @@ test('continues after freezing a failed assertion', async ({ page, receipt }) =>
   await page.route('https://api.example.test/**', (route) => route.fulfill({ status: 200, body: '{}' }));
   await page.setContent(`
     <main>
-      <label>Email <input value="secret@example.com"></label>
-      <p data-private>customer account 99887766</p>
+      <label for="account">ASSOCIATED_LABEL_UNIQUE_SECRET</label>
+      <input id="account" aria-label="ARIALABEL_UNIQUE_SECRET" aria-describedby="account-description" value="secret@example.com">
+      <p id="account-description">ARIA_DESCRIPTION_UNIQUE_SECRET</p>
+      <p data-private aria-label="MASKARIA_UNIQUE_SECRET">MASKED_VISIBLE_TEXT</p>
       <output data-testid="cart-count">0</output>
     </main>
   `);

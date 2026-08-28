@@ -1,6 +1,6 @@
 {
   "name": "journey-failure-receipts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scrubbed assertion-level evidence receipts for Playwright journeys",
   "license": "MIT",
   "author": "Sociobot (Param Factory)",
@@ -48,8 +48,9 @@
     "build": "npm run build:package && npm run build:site",
     "test:unit": "vitest run",
     "test:e2e": "node tests/run-fixture-smoke.mjs",
+    "test:consumer": "node tests/run-packed-consumer.mjs",
     "test:site": "playwright test --config tests/site/playwright.config.ts",
-    "test": "npm run test:unit && npm run test:e2e && npm run test:site",
+    "test": "npm run test:unit && npm run test:e2e && npm run test:consumer && npm run test:site",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {

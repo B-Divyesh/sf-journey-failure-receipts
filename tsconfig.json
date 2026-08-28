@@ -3,6 +3,10 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "baseUrl": ".",
+    "paths": {
+      "journey-failure-receipts/playwright": ["src/playwright.ts"]
+    },
     "strict": true,
     "declaration": true,
     "esModuleInterop": true,

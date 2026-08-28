@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 — 2026-08-28
+
+- Redact form and configured-selector accessible names, descriptions, and associated labels before ARIA evidence is persisted.
+- Make scrollable documentation and generated receipt code regions keyboard reachable.
+- Add static-host security/cache policy artifacts and activate service-worker updates immediately.
+
 ## 0.1.0 — 2026-08-27
 
 - Initial Playwright receipt fixture and CI reporter.

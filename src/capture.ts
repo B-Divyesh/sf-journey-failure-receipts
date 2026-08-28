@@ -16,21 +16,75 @@ async function validMaskSelectors(page: CaptureContext['page'], selectors: strin
   return valid;
 }
 
+/**
+ * Collect every string that can become an accessible name or description for
+ * private content. Playwright's ariaSnapshot() is taken from the live page,
+ * rather than the scrubbed DOM clone, so form values alone are not enough:
+ * labels and ARIA attributes can contain customer data too.
+ */
 async function sensitiveValues(page: CaptureContext['page'], selectors: string[]): Promise<string[]> {
   return page.evaluate(({ form, extra }) => {
     const values = new Set<string>();
     const add = (value: unknown) => {
-      if (typeof value === 'string' && value.trim().length >= 3) values.add(value.trim());
+      if (typeof value !== 'string') return;
+      const trimmed = value.trim();
+      if (trimmed.length < 3) return;
+      values.add(trimmed);
+      values.add(trimmed.replace(/\s+/g, ' '));
     };
+
+    const addReferencedText = (element: Element, attribute: 'aria-labelledby' | 'aria-describedby') => {
+      for (const id of (element.getAttribute(attribute) ?? '').split(/\s+/)) {
+        if (id) add(document.getElementById(id)?.textContent);
+      }
+    };
+
+    const addAccessibleText = (element: Element) => {
+      // These are the attributes browsers use directly or indirectly when
+      // calculating the name/description exposed by ariaSnapshot().
+      for (const attribute of ['aria-label', 'aria-description', 'title', 'placeholder', 'alt']) add(element.getAttribute(attribute));
+      addReferencedText(element, 'aria-labelledby');
+      addReferencedText(element, 'aria-describedby');
+      if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
+        add(element.value);
+        for (const label of element.labels ?? []) add(label.textContent);
+      } else {
+        add(element.textContent);
+      }
+    };
+
     for (const element of document.querySelectorAll(form)) {
-      if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) add(element.value);
-      else add(element.textContent);
+      addAccessibleText(element);
     }
     for (const selector of extra) {
-      for (const element of document.querySelectorAll(selector)) add(element.textContent);
+      for (const element of document.querySelectorAll(selector)) addAccessibleText(element);
     }
-    return [...values].slice(0, 100);
+    return [...values].slice(0, 300);
   }, { form: FORM_SELECTOR, extra: selectors });
+}
+
+async function screenshotMasks(page: CaptureContext['page'], selectors: string[]): Promise<ReturnType<CaptureContext['page']['locator']>[]> {
+  const referencedIds = await page.evaluate(({ form, extra }) => {
+    const ids = new Set<string>();
+    const sensitive = new Set<Element>(document.querySelectorAll(form));
+    for (const selector of extra) document.querySelectorAll(selector).forEach((element) => sensitive.add(element));
+    for (const element of sensitive) {
+      for (const attribute of ['aria-labelledby', 'aria-describedby']) {
+        for (const id of (element.getAttribute(attribute) ?? '').split(/\s+/)) if (id) ids.add(id);
+      }
+    }
+    return [...ids];
+  }, { form: FORM_SELECTOR, extra: selectors });
+
+  // Labels and ID-referenced descriptions can be visible customer data even
+  // though the form control itself is masked. Mask them in pixels as well as
+  // redacting them from textual evidence.
+  return [
+    page.locator(FORM_SELECTOR),
+    page.locator('label'),
+    ...selectors.map((selector) => page.locator(selector)),
+    ...referencedIds.map((id) => page.locator(`[id=${JSON.stringify(id)}]`)),
+  ];
 }
 
 async function scrubbedDom(page: CaptureContext['page'], rootSelector: string, maskSelectors: string[]): Promise<string> {
@@ -99,13 +153,14 @@ export async function captureEvidence(context: CaptureContext): Promise<ReceiptE
   evidence.network = context.network.slice(-options.maxNetworkEntries).map((entry) => ({ ...entry, url: safeUrl(entry.url) }));
 
   try {
+    const masks = await screenshotMasks(page, validSelectors.slice(1));
     const buffer = await page.screenshot({
       type: options.screenshot.type,
       quality: options.screenshot.type === 'png' ? undefined : options.screenshot.quality,
       fullPage: false,
       animations: 'disabled',
       caret: 'hide',
-      mask: validSelectors.map((selector) => page.locator(selector)),
+      mask: masks,
       maskColor: '#102A43',
     });
     if (buffer.byteLength <= options.maxScreenshotBytes) {

@@ -58,8 +58,8 @@ Receipts are ordinary self-contained `.html` files with an embedded, bounded scr
 
 ## Privacy defaults
 
-- Every `input`, `textarea`, `select`, and `[contenteditable]` is masked in screenshots and redacted in DOM captures.
-- Add `maskSelectors` for customer data rendered outside form controls.
+- Every `input`, `textarea`, `select`, and `[contenteditable]` is masked in screenshots and redacted in DOM and ARIA captures. Their accessible names, descriptions, and associated label text are redacted too.
+- Add `maskSelectors` for customer data rendered outside form controls; their text and accessible names/descriptions are redacted in every capture.
 - Request and response bodies are never captured. Network entries contain only method, resource type, redacted origin/path, status, and duration.
 - Authorization, cookies, query strings, URL credentials, and fragment values are discarded.
 - Limits default to 5 receipts/test, 40 network entries, 20 console errors, 80 KB DOM, and 40 KB ARIA text. Configure lower caps for sensitive suites.

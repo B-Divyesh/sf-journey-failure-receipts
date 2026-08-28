@@ -110,7 +110,7 @@
         <div><p class="section-number">04 / Field installation</p><h2 id="install-title">Wrap only the assertions that matter.</h2><p>Use regular <code>expect</code> inside <code>receipt.soft</code>. The helper freezes evidence, then records a real Playwright soft failure so your test can continue.</p></div>
         <div class="code-sheet">
           <div class="code-title"><span>fixtures.ts + journey.spec.ts</span><button class="copy-button" id="copy-code" type="button">Copy code</button></div>
-          <pre><code id="install-code"><span class="code-muted">// fixtures.ts</span>
+          <pre tabindex="0" aria-label="Installation example. Scroll horizontally to inspect long lines."><code id="install-code"><span class="code-muted">// fixtures.ts</span>
 <span class="code-key">import</span> { createReceiptTest, expect } <span class="code-key">from</span> <span class="code-string">'journey-failure-receipts/playwright'</span>;
 
 <span class="code-key">export const</span> test = createReceiptTest({
