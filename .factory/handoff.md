@@ -74,13 +74,25 @@ dependency change was made by this repair.
 
 ## Deploy and publish
 
-Build with `npm run build`; deploy `dist/site` to the existing Azure Static
-Apps target. `site/public/staticwebapp.config.json` is copied to the deploy
-root and is the host-specific policy source of truth. Validate the live
-revision with `curl -I https://journey-failure-receipts.sociobot.in/` and an
-asset request: the document should include CSP, Permissions-Policy, and
-X-Frame-Options; hashed assets should be immutable; `/sw.js` should be
-no-cache.
+Deployed `dist/site` to Azure Static Apps production on 2026-08-28 through
+the factory static deployment helper: deployment ID
+`a47da784-692d-4950-8200-0555e191581f`, default host
+`kind-flower-010ec480f.7.azurestaticapps.net`, custom domain
+`https://journey-failure-receipts.sociobot.in/` (HTTPS 200).
+
+Live verification after deployment: 925 ms load; no browser console/page
+errors; title/lang/one `h1`/`main`/image alts/labelled buttons present.
+At 390×844, axe serious/critical = 0, the installation code region receives
+keyboard focus, the ArrowDown tab demo selects checkpoint 3, and there is no
+horizontal document overflow. The service worker controls a reload; an offline
+reload returns 200 and displays the offline banner. Live response headers now
+include CSP, Permissions-Policy, and `X-Frame-Options: DENY`; the hashed JS is
+`max-age=31536000, immutable`; `/sw.js` is `no-cache, no-store,
+must-revalidate` and serves cache version `journey-receipts-v2`.
+
+`site/public/staticwebapp.config.json` is copied to the deploy root and is the
+host-specific policy source of truth. Build future revisions with
+`npm run build` and deploy `dist/site`.
 
 The package is ready for the factory registry owner to publish with
 `npm pack` (or `npm publish` from the resulting `0.1.1` tarball). No registry
