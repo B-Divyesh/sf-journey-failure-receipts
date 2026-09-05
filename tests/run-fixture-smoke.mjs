@@ -31,7 +31,8 @@ for (const leaked of [
 ]) {
   if (html.includes(leaked)) throw new Error(`Sensitive fixture value leaked into receipt: ${leaked}`);
 }
-for (const expected of ['Cart count increments', 'data:image/jpeg;base64', '[redacted]']) {
+for (const expected of ['Cart count increments', 'data:image/jpeg;base64', '[redacted]', 'Mask selector was skipped because it is invalid']) {
   if (!html.includes(expected)) throw new Error(`Receipt is missing expected evidence: ${expected}`);
 }
+if (html.includes('Second capped failure')) throw new Error('The maxReceipts boundary wrote a second receipt into the first artifact.');
 process.stdout.write(`Verified scrubbed failure receipt: ${receipts[0]}\n`);

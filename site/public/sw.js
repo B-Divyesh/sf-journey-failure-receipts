@@ -1,4 +1,4 @@
-const CACHE = 'journey-receipts-v3';
+const CACHE = 'journey-receipts-v4';
 const SHELL = ['/', '/index.html', '/demo/', '/privacy/', '/terms/', '/404.html', '/blueprint-journey.webp', '/favicon.svg', '/apple-touch-icon.svg', '/share-card.svg', '/fonts/instrument-sans-600.woff2', '/fonts/instrument-sans-700.woff2', '/fonts/ibm-plex-mono-400.woff2', '/fonts/ibm-plex-mono-600.woff2'];
 self.addEventListener('install', (event) => event.waitUntil((async () => {
   const cache = await caches.open(CACHE);

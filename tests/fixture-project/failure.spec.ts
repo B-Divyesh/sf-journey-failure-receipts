@@ -2,12 +2,12 @@ import { createReceiptTest, expect } from 'journey-failure-receipts/playwright';
 
 const test = createReceiptTest({
   outputDir: 'test-results/smoke-receipts',
-  maskSelectors: ['[data-private]'],
+  maskSelectors: ['[data-private]', '##invalid'],
   domSelector: 'main',
-  maxReceipts: 2,
+  maxReceipts: 1,
 });
 
-test('@claim:receipt-capture continues after freezing a failed assertion', async ({ page, receipt }) => {
+test('@claim:receipt-capture saves one capped receipt and continues after failed assertions', async ({ page, receipt }) => {
   await page.route('https://api.example.test/**', (route) => route.fulfill({ status: 200, body: '{}' }));
   await page.setContent(`
     <main>
@@ -25,6 +25,10 @@ test('@claim:receipt-capture continues after freezing a failed assertion', async
 
   await receipt.soft('Cart count increments', async () => {
     await expect(page.getByTestId('cart-count')).toHaveText('1', { timeout: 200 });
+  });
+
+  await receipt.soft('Second capped failure', async () => {
+    await expect(page.getByTestId('cart-count')).toHaveText('2', { timeout: 200 });
   });
 
   await page.getByTestId('cart-count').evaluate((node) => { node.textContent = 'journey-continued'; });

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4 — 2026-09-05
+
+- Add packed-consumer proofs for screenshot masking, metadata-only network rows, receipt context, and no package upload.
+- Add a reproducible Node 20 compatibility check and clean-install CI matrix.
+- Complete social metadata on legal and not-found pages and correct demo and soft-assertion wording.
+- Bump the offline cache so deployed visitors receive the repaired pages.
+
 ## 0.1.3 — 2026-08-28
 
 - Generate ARIA evidence from a temporary structurally scrubbed DOM clone instead of post-processing a snapshot of the live customer page.

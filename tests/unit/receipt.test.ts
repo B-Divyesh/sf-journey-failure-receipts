@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { renderReceipt } from '../../src/receipt.js';
+import { resolveOptions } from '../../src/playwright.js';
 
 describe('static receipt', () => {
   it('renders portable evidence without executable script', () => {
@@ -18,5 +19,20 @@ describe('static receipt', () => {
 
   it('@claim:mit-license ships under the MIT License', () => {
     expect(readFileSync(resolve(import.meta.dirname, '../../LICENSE'), 'utf8')).toContain('MIT License');
+  });
+
+  it('@claim:configuration-defaults resolves every documented option default', () => {
+    expect(resolveOptions()).toEqual({
+      outputDir: 'test-results/journey-receipts',
+      maskSelectors: [],
+      domSelector: 'body',
+      maxReceipts: 5,
+      maxNetworkEntries: 40,
+      maxConsoleEntries: 20,
+      maxDomBytes: 81920,
+      maxAriaBytes: 40960,
+      maxScreenshotBytes: 1500000,
+      screenshot: { type: 'jpeg', quality: 72 },
+    });
   });
 });

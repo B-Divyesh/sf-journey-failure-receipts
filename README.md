@@ -2,7 +2,7 @@
 
 Capture each failed Playwright assertion as a local HTML receipt.
 
-For test teams, the receipt keeps the page evidence from a soft failure before later steps change the flow. The wrapped assertion saves a receipt and the test flow continues. See the tested claim in [`.factory/claims.json`](.factory/claims.json).
+For test teams, the receipt keeps the page evidence from a soft assertion before later steps change the flow. The wrapped assertion saves a receipt and the test flow continues. See every tested claim in [`.factory/claims.json`](.factory/claims.json).
 
 ## Try the sample
 
@@ -57,7 +57,11 @@ export default {
 
 ## Privacy controls
 
-Use `maskSelectors` for private content outside form fields. The packaged receipt removes form and configured-selector values from DOM and accessibility evidence. The packed-consumer claim test covers labels, ARIA text, and selector text.
+Use `maskSelectors` for private content outside form fields. Screenshots mask form fields, their visible labels, and configured selectors before capture. DOM and accessibility evidence replace their values and names with `[redacted]`.
+
+Network rows contain only the method, status, resource type, redacted URL shape, and duration. Request bodies, response bodies, headers, query strings, fragments, credentials, and path values are excluded.
+
+Each receipt identifies the test, project, capture time, redacted page URL, and assertion failure. Receipt creation does not upload the file or send telemetry.
 
 Review generated CI artifacts and set your own retention policy.
 
@@ -96,11 +100,11 @@ Run every listed visitor claim from a clean checkout:
 node -e "for (const c of require('./.factory/claims.json')) console.log(c.test)"
 ```
 
-The static documentation and demo build to `dist/site`. Run `npm run dev` to preview the site. The factory handles npm publishing and static deployment.
+The static documentation and demo build to `dist/site`. Run `npm run dev` to preview the site.
 
 ## Scope
 
-Use this with Playwright tests you already run. It does not run tests, monitor sites, compare screenshots, or upload receipts.
+Use this package inside Playwright tests you already run.
 
 ## License
 
